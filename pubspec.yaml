@@ -1,0 +1,35 @@
+name: assisto_probe
+description: "Minimal Flutter app to probe risky plugins' Android release builds (no Assisto code)."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # real app's existing (proven) plugin set — to catch resolution conflicts
+  http: ^1.2.2
+  sqflite: ^2.3.3
+  path: ^1.9.0
+  path_provider: ^2.1.4
+  shared_preferences: ^2.3.2
+  flutter_secure_storage: ^9.2.2
+  intl: ^0.19.0
+  provider: ^6.1.2
+  package_info_plus: ^8.0.2
+  open_filex: ^4.5.0
+  flutter_local_notifications: ^17.2.3
+  timezone: ^0.9.4
+  url_launcher: ^6.3.0
+  # NEW candidates being probed
+  image_picker: ^1.1.2
+  geolocator: ^13.0.1
+  speech_to_text: ^7.0.0
+  workmanager: ^0.5.2
+  share_plus: ^10.0.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter

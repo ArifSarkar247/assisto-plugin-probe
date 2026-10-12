@@ -1,0 +1,45 @@
+name: Probe plugins
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '17' }
+      - uses: subosito/flutter-action@v2
+        with: { channel: stable, cache: true }
+      - name: Create android
+        run: flutter create --project-name assisto_probe --org com.assisto.probe --platforms=android .
+      - name: Pub get
+        run: flutter pub get
+      - name: Gradle SDK/desugaring patch
+        run: |
+          python3 - <<'PY'
+          import os, re
+          kts="android/app/build.gradle.kts"; gr="android/app/build.gradle"
+          p,k=(kts,True) if os.path.exists(kts) else (gr,False)
+          s=open(p).read()
+          s=re.sub(r'\n[ \t]*minSdk[A-Za-z]*\s*=?[^\n]*','',s)
+          s=s.replace('defaultConfig {','defaultConfig {'+('\n        minSdk = 23' if k else '\n        minSdkVersion 23'),1)
+          s=re.sub(r'\n[ \t]*compileSdk[A-Za-z]*\s*=?[^\n]*','',s)
+          s=s.replace('android {','android {'+('\n    compileSdk = 36' if k else '\n    compileSdk 36'),1)
+          if 'coreLibraryDesugaring' not in s:
+              if k:
+                  s=s.replace('compileOptions {','compileOptions {\n        isCoreLibraryDesugaringEnabled = true',1)
+                  s+='\n\ndependencies {\n    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")\n}\n'
+              else:
+                  s=s.replace('compileOptions {','compileOptions {\n        coreLibraryDesugaringEnabled true',1)
+                  s+="\n\ndependencies {\n    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'\n}\n"
+          open(p,'w').write(s)
+          print('sdk lines:',[l.strip() for l in s.splitlines() if 'Sdk' in l])
+          PY
+      - name: Build release APK (arm64)
+        run: flutter build apk --release --target-platform=android-arm64
+      - name: OK
+        run: echo "PROBE BUILD CLEAN"
